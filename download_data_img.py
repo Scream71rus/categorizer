@@ -1,15 +1,17 @@
 
 import os
+import time
 
 from urllib.request import urlopen
+
 import psycopg2.extras
 
 import conf
 
 
-def save_img(img):
+def save_img(category_id, img):
     resource = urlopen(img)
-    out = open("data/train/{}.jpg".format(os.urandom(8).hex()), 'wb')
+    out = open("data/train/{}/{}.jpg".format(category_id, os.urandom(8).hex()), 'wb')
     out.write(resource.read())
     out.close()
 
@@ -22,8 +24,24 @@ db_connection = psycopg2.connect(
     cursor_factory=psycopg2.extras.DictCursor
 )
 
-cursor = db_connection.cursor()
-cursor.execute('select * from shop.shop limit 1')
+# споты и трек системы 487
+# потолочные светильники 481
+# настольные лампы 482
 
-a = cursor.fetchone()
-print(a)
+category_ids = (487, 481, 482)
+
+for category_id in category_ids:
+    cursor = db_connection.cursor()
+    cursor.execute("select * from product.product where category_id = %s and picture_url != '' limit 2000",
+                   (category_id,))
+
+    products = cursor.fetchall()
+
+    for product in products:
+        time.sleep(1)
+
+        picture_url = product.get('picture_url')
+        try:
+            save_img(category_id, picture_url)
+        except:
+            pass
