@@ -28,20 +28,33 @@ db_connection = psycopg2.connect(
 # потолочные светильники 481
 # настольные лампы 482
 
-category_ids = (487, 481, 482)
+category_ids = (487,)
 
 for category_id in category_ids:
     cursor = db_connection.cursor()
-    cursor.execute("select * from product.product where category_id = %s and picture_url != '' limit 2000",
+    cursor.execute("""select id, picture_url from product.product where category_id = %s and picture_url != ''
+                      order by id desc""",
                    (category_id,))
 
     products = cursor.fetchall()
 
-    for product in products:
-        time.sleep(1)
+    count_url = 0
+    saved_img = 0
 
-        picture_url = product.get('picture_url')
-        try:
-            save_img(category_id, picture_url)
-        except:
-            pass
+    for product in products:
+        if saved_img != 2000:
+            time.sleep(0.2)
+
+            picture_url = product.get('picture_url')
+            count_url = count_url + 1
+            try:
+                print(count_url)
+                print('saving {} category -- {}'.format(category_id, picture_url))
+                save_img(category_id, picture_url)
+                saved_img = saved_img + 1
+                print('saved')
+
+            except:
+                pass
+        else:
+            break
